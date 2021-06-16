@@ -1,0 +1,102 @@
+#!/bin/sh
+set -eu
+
+ME=autoreboot
+VERSION=0.1
+STOPFILE="/etc/noreboot"
+REBOOTEXEC="/sbin/shutdown -r now"
+SCRIPTSDIR="/etc/autoreboot/run.d"
+
+usage()
+{
+  cat <<-_eousage
+	Usage: $ME [options] [-- script options]
+
+	_eousage
+}
+
+CMDARGS=
+SCRIPTARGS=
+END_OF_ARGS=0
+DO_NOTHING=0
+for arg in "$@"; do
+  case "$arg" in
+    (*-autoreboot-do-nothing) DO_NOTHING=1;;
+    (*-help)
+      usage 2>&1
+      exit 0
+      ;;
+    --) END_OF_ARGS=1;;
+    *\"*)
+      echo 'E: cannot use double-quotes (") in arguments' >&2
+      exit 1
+      ;;
+    *)
+      if [ $END_OF_ARGS -eq 0 ]; then
+        CMDARGS="${CMDARGS:+$CMDARGS }\"$arg\""
+      else
+        SCRIPTARGS="${SCRIPTARGS:+$SCRIPTARGS }--arg \"$arg\""
+      fi
+      ;;
+  esac
+done
+
+do_reboot()
+{
+  if [ $DO_NOTHING -eq 1 ]; then
+    echo "$ME: would run: $REBOOTEXEC"
+    exit 0
+  else
+    eval exec $REBOOTEXEC
+  fi
+}
+
+if [ $DO_NOTHING -eq 1 ]; then
+  echo "I: demo mode; $ME will not do anything due to --autoreboot-do-nothing." >&2
+fi
+
+if [ ! -e "/var/run/reboot-required" ]; then
+  if [ -t 1 ] ; then
+    echo "I: Reboot not required" >&2
+  fi
+  exit 0;
+fi
+
+if [ -e "/run/systemd/shutdown/scheduled" ]; then
+  echo "I: Reboot required but scheduled" >&2
+  exit 0;
+fi
+
+if [ -e "$STOPFILE" ]; then
+  echo "I: Not commencing due to stop file $STOPFILE" >&2
+  exit 0;
+fi
+
+if [ -n "${AUTOREBOOT_CMD:-}" ]; then
+  do_reboot
+fi
+
+echo "I: Reboot requested from:" >&2
+REBOOT_PKGS=$(cat /var/run/reboot-required.pkgs)
+echo "$REBOOT_PKGS" >&2
+
+AUTOREBOOT_DO_NOTHING=$DO_NOTHING; export AUTOREBOOT_DO_NOTHING
+AUTOREBOOT_SETTINGS="/etc/autoreboot/rc"; export AUTOREBOOT_SETTINGS
+
+if [ -e "$SCRIPTSDIR" ]; then
+  for script in $(run-parts --test $SCRIPTSDIR); do
+    ret=0
+    eval $script $SCRIPTARGS || ret=$?
+    if [ $ret -ne 0 ]; then
+      echo "W: aborting due to ${script##*/} exiting with code $ret." >&2
+      exit $ret
+    fi
+  done
+fi
+
+if [ -t 1 ] ; then
+  echo "I: Would reboot if was CRON" >&2
+  exit 0;
+fi
+
+do_reboot
