@@ -5,6 +5,10 @@ Autoreboot script, run from cron
 
 5 6 * * * root /path/to/autoreboot
 
+## Run daily weekdays - Daily weekdays at 06:05
+
+5 6 * * 1-5 root /path/to/autoreboot
+
 ## Run once per week - Weekly on Monday at 06:05
 
 5 6 * * 1 root /path/to/autoreboot
