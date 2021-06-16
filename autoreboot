@@ -2,7 +2,7 @@
 set -eu
 
 ME=autoreboot
-VERSION=0.1
+VERSION=0.2
 STOPFILE="/etc/noreboot"
 REBOOTEXEC="/sbin/shutdown -r now"
 SCRIPTSDIR="/etc/autoreboot/run.d"
@@ -19,9 +19,15 @@ CMDARGS=
 SCRIPTARGS=
 END_OF_ARGS=0
 DO_NOTHING=0
+IN_TERMINAL=0
+if [ -t 1 ] ; then
+  IN_TERMINAL=1
+fi
+
 for arg in "$@"; do
   case "$arg" in
     (*-autoreboot-do-nothing) DO_NOTHING=1;;
+    (*-cron) IN_TERMINAL=0;;
     (*-help)
       usage 2>&1
       exit 0
@@ -94,7 +100,7 @@ if [ -e "$SCRIPTSDIR" ]; then
   done
 fi
 
-if [ -t 1 ] ; then
+if [ $IN_TERMINAL -eq 1 ] ; then
   echo "I: Would reboot if was CRON" >&2
   exit 0;
 fi
