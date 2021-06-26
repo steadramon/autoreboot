@@ -2,7 +2,7 @@
 set -eu
 
 ME=autoreboot
-VERSION=0.2
+VERSION=0.3
 STOPFILE="/etc/noreboot"
 REBOOTEXEC="/sbin/shutdown -r now"
 SCRIPTSDIR="/etc/autoreboot/run.d"
@@ -82,9 +82,11 @@ if [ -n "${AUTOREBOOT_CMD:-}" ]; then
   do_reboot
 fi
 
-echo "I: Reboot requested from:" >&2
-REBOOT_PKGS=$(cat /var/run/reboot-required.pkgs)
-echo "$REBOOT_PKGS" >&2
+if [ -e "/var/run/reboot-required.pkgs" ]; then
+  echo -n "I: Reboot requested from: " >&2
+  REBOOT_PKGS=$(/bin/cat /var/run/reboot-required.pkgs | /usr/bin/tr '\n' ',' | /bin/sed 's/,$//')
+  echo "$REBOOT_PKGS" >&2
+fi
 
 AUTOREBOOT_DO_NOTHING=$DO_NOTHING; export AUTOREBOOT_DO_NOTHING
 AUTOREBOOT_SETTINGS="/etc/autoreboot/rc"; export AUTOREBOOT_SETTINGS
