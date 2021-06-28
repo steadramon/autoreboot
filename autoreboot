@@ -2,7 +2,7 @@
 set -eu
 
 ME=autoreboot
-VERSION=0.3
+VERSION=0.4
 STOPFILE="/etc/noreboot"
 REBOOTEXEC="/sbin/shutdown -r now"
 SCRIPTSDIR="/etc/autoreboot/run.d"
@@ -69,7 +69,8 @@ if [ ! -e "/var/run/reboot-required" ]; then
 fi
 
 if [ -e "/run/systemd/shutdown/scheduled" ]; then
-  echo "I: Reboot required but scheduled" >&2
+  SCHEDULED=$(date -d "@$( awk -F '=' '/USEC/{ $2=substr($2,1,10); print $2 }' /run/systemd/shutdown/scheduled )")
+  echo "I: Reboot required but already scheduled for $SCHEDULED" >&2
   exit 0;
 fi
 
