@@ -2,7 +2,7 @@
 set -eu
 
 ME=autoreboot
-VERSION=0.4
+VERSION=0.5
 STOPFILE="/etc/noreboot"
 REBOOTEXEC="/sbin/shutdown -r now"
 SCRIPTSDIR="/etc/autoreboot/run.d"
@@ -91,6 +91,7 @@ fi
 
 AUTOREBOOT_DO_NOTHING=$DO_NOTHING; export AUTOREBOOT_DO_NOTHING
 AUTOREBOOT_SETTINGS="/etc/autoreboot/rc"; export AUTOREBOOT_SETTINGS
+AUTOREBOOT_IN_TERMINAL=$IN_TERMINAL; export AUTOREBOOT_IN_TERMINAL
 
 if [ -e "$SCRIPTSDIR" ]; then
   for script in $(run-parts --test $SCRIPTSDIR); do
