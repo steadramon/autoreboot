@@ -2,7 +2,7 @@
 set -eu
 
 ME=autoreboot
-VERSION=0.5
+VERSION=0.6
 STOPFILE="/etc/noreboot"
 REBOOTEXEC="/sbin/shutdown -r now"
 SCRIPTSDIR="/etc/autoreboot/run.d"
@@ -53,6 +53,7 @@ do_reboot()
     echo "$ME: would run: $REBOOTEXEC"
     exit 0
   else
+    echo "I: Rebooting ..." >&2
     eval exec $REBOOTEXEC
   fi
 }
